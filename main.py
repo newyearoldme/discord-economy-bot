@@ -4,8 +4,8 @@ import asyncio
 import os
 
 from tortoise import Tortoise
-
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -18,9 +18,13 @@ intents.members = True
 bot = discord.Bot(intents=intents, loop=loop)
 
 token = os.getenv("token")
+db_url = os.getenv("db_url")
 
 if not token:
     raise RuntimeError("❌ Не найден токен в переменных окружения")
+
+if not db_url:
+    raise RuntimeError("❌ Не найден db_url в переменных окружения")
 
 cogs_list = [
     'economy'
@@ -32,7 +36,7 @@ for cog in cogs_list:
 
 @bot.event
 async def on_ready():
-    print("Бот работает!")
+    print("✅ Бот работает!")
 
 @bot.event
 async def on_application_command_error(ctx: discord.ApplicationContext, error: discord.DiscordException):
@@ -48,7 +52,7 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
         await ctx.respond("⚠️ Произошла неизвестная ошибка.", ephemeral=True)
 
 async def main():
-    await Tortoise.init(db_url="sqlite://utils/db.sqlite", modules={"discord": ["utils.models"]})
+    await Tortoise.init(db_url=db_url, modules={"discord": ["utils.models"]})
     await Tortoise.generate_schemas()
     await bot.login(token)
     await bot.connect()
