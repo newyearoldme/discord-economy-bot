@@ -1,30 +1,22 @@
 import discord
 from discord.ext import commands
-import asyncio
 import os
-
-from tortoise import Tortoise
 from dotenv import load_dotenv
+from utils.db_alchemy import init_db
 
 load_dotenv()
 
-
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
+init_db()
 
 intents = discord.Intents.default()
 intents.members = True
 
-bot = discord.Bot(intents=intents, loop=loop)
+bot = discord.Bot(intents=intents)
 
 token = os.getenv("token")
-db_url = os.getenv("db_url")
 
 if not token:
     raise RuntimeError("❌ Не найден токен в переменных окружения")
-
-if not db_url:
-    raise RuntimeError("❌ Не найден db_url в переменных окружения")
 
 cogs_list = [
     'economy'
@@ -46,18 +38,11 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
             ephemeral=True
         )
     elif isinstance(error, commands.CommandOnCooldown):
-        await ctx.respond(f"❌ Команда на перезарядке, попробуйте через {round(error.retry_after, 2)} сек.", ephemeral=True)
+        await ctx.respond(
+            f"❌ Команда на перезарядке, попробуйте через {round(error.retry_after, 2)} сек.", ephemeral=True)
     else:
         print(f"❗ Ошибка: {error}")
         await ctx.respond("⚠️ Произошла неизвестная ошибка.", ephemeral=True)
 
-async def main():
-    await Tortoise.init(db_url=db_url, modules={"discord": ["utils.models"]})
-    await Tortoise.generate_schemas()
-    await bot.login(token)
-    await bot.connect()
-
-try:
-    loop.run_until_complete(main())
-finally:
-    loop.run_until_complete(Tortoise.close_connections())
+if __name__ == "__main__":
+    bot.run(token)
