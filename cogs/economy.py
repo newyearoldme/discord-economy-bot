@@ -2,7 +2,6 @@ import discord
 from discord import option
 from discord.ext import commands
 
-from typing import Optional
 from utils import crud
 
 
@@ -19,45 +18,49 @@ class Economy(discord.Cog):
         else:
             await ctx.respond("❌ Вы уже зарегистрированы!", ephemeral=True)
 
-    @discord.slash_command(description="Показывает баланс")
-    async def get_balance(self, ctx: discord.ApplicationContext, user: Optional[discord.User] = None):
-        user = user or ctx.author
-        balance = crud.get_balance(user.id)
+    @discord.slash_command(description="Показывает Ваш баланс")
+    async def balance(self, ctx: discord.ApplicationContext):
+        balance = crud.get_balance(ctx.author.id)
 
         if balance is None:
-            if user.id == ctx.author.id:
-                await ctx.respond("❌ Вы не зарегистрированы, используйте команду `/register`", ephemeral=True)
-            else:
-                await ctx.respond(f"❌ Пользователь {user.mention} не зарегистрирован", ephemeral=True)
-            return
-
-        if user.id == ctx.author.id:
+            await ctx.respond("❌ Вы не зарегистрированы, используйте команду `/register`", ephemeral=True)
+        else:
             await ctx.respond(f"У Вас на балансе ${balance}", ephemeral=True)
-        else:
-            await ctx.respond(f"Баланс {user.mention}: ${balance}", ephemeral=True)
 
-    @discord.slash_command(description="Добавляет деньги на Ваш счёт (таймаут - 10 сек.)")
-    @option("value", input_type=int, description="Введите сумму пополнения", min_value=1)
+    @discord.slash_command(description="90% шанс получить $100-500, 10% потерять всё")
     @commands.cooldown(1, 10, commands.BucketType.user)
-    async def add_money(self, ctx: discord.ApplicationContext, value: int, user: Optional[discord.User] = None):
-        user = user or ctx.author
-        success = crud.add_money(user.id, value)
+    async def add_money(self, ctx: discord.ApplicationContext):
+        result, value = crud.add_money(ctx.author.id)
 
-        if not success:
-            if user.id == ctx.author.id:
+        match result:
+            case "not_registered":
                 await ctx.respond("❌ Вы не зарегистрированы, используйте команду `/register`", ephemeral=True)
-            else:
-                await ctx.respond(f"❌ Пользователь {user.mention} не зарегистрирован", ephemeral=True)
-            return
+            case "success":
+                await ctx.respond(f"✅ Вам повезло, на ваш счёт добавлено ${value}", ephemeral=True)
+            case "reset":
+                await ctx.respond("💀 Неудача! Ваш счёт обнулён...", ephemeral=True)
 
-        if user.id == ctx.author.id:
-            await ctx.respond(f"✅ На Ваш счёт добавлено ${value}", ephemeral=True)
-        else:
-            await ctx.respond(f"✅ На счёт {user.mention} добавлено ${value}", ephemeral=True)
+    @discord.slash_command(description="Испытайте удачу, либо Ваш счёт удваивается, либо обнуляется!")
+    async def all_in(self, ctx: discord.ApplicationContext):
+        result, balance = crud.all_in(ctx.author.id)
+
+        match result:
+            case "not_registered":
+                await ctx.respond("❌ Вы не зарегистрированы, используйте команду `/register`", ephemeral=True)
+            case "zero_balance":
+                await ctx.respond("❌ Вы не можете делать all in при нулевом балансе", ephemeral=True)
+            case "success":
+                await ctx.respond(f"✅ Вам повезло, Ваш счёт удвоился, теперь он составляет ${balance}", ephemeral=True)
+            case "reset":
+                await ctx.respond("💀 Неудача! Ваш счёт обнулён...", ephemeral=True)
 
     @discord.slash_command(description="Перевести деньги другому пользователю")
     @option("value", description="Введите сумму для отправки", input_type=int, min_value=1)
     async def transfer_money(self, ctx: discord.ApplicationContext, user: discord.User, value: int):
+        if user.bot:
+            await ctx.respond("❌ Нельзя отправлять деньги боту!", ephemeral=True)
+            return
+        
         if user.id == ctx.author.id:
             await ctx.respond("❌ Нельзя отправлять деньги самому себе!", ephemeral=True)
             return
@@ -69,41 +72,6 @@ class Economy(discord.Cog):
             return
 
         await ctx.respond(f"✅ Вы успешно перевели ${value} пользователю {user.mention}", ephemeral=True)
-
-    @discord.slash_command(description="Обнуляет счёт пользователя")
-    async def reset_balance(self, ctx: discord.ApplicationContext, user: Optional[discord.User] = None):
-        user = user or ctx.author
-        success = crud.reset_money(user.id)
-
-        if not success:
-            if user.id == ctx.author.id:
-                await ctx.respond("⚠️ Вы не зарегестрированы", ephemeral=True)
-            else:
-                await ctx.respond(f"⚠️ Пользователь {user.mention} не зарегистрирован", ephemeral=True)
-                return  
-            
-        if user.id == ctx.author.id:
-            await ctx.respond("✅ Ваш счёт обнулён!", ephemeral=True)
-        else:
-            await ctx.respond(f"✅ Счёт пользователя {user.mention} обнулён!", ephemeral=True)
-
-    @discord.slash_command(description="Удаляет пользователя из базы данных")
-    async def remove_user(self, ctx: discord.ApplicationContext, user: Optional[discord.User] = None):
-        user = user or ctx.author     
-        deleted = crud.delete_user(user.id)
-
-        if not deleted:
-            if user.id == ctx.author.id:
-                await ctx.respond("⚠️ Вы не зарегестрированы", ephemeral=True)
-            else:
-                await ctx.respond(f"⚠️ Пользователь {user.mention} не зарегистрирован", ephemeral=True)
-            return
-
-        if user.id == ctx.author.id:
-            await ctx.respond("✅ Вы успешно удалили себя из базы", ephemeral=True)
-        else:
-            await ctx.respond(f"✅ Пользователь {user.mention} удалён из базы", ephemeral=True)
-
 
 def setup(bot: discord.Bot):
     bot.add_cog(Economy(bot))

@@ -19,6 +19,7 @@ if not token:
     raise RuntimeError("❌ Не найден токен в переменных окружения")
 
 cogs_list = [
+    'administrator',
     'economy'
 ]
 
