@@ -45,5 +45,6 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
         print(f"❗ Ошибка: {error}")
         await ctx.respond("⚠️ Произошла неизвестная ошибка.", ephemeral=True)
 
+
 if __name__ == "__main__":
     bot.run(token)

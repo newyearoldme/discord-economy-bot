@@ -1,4 +1,4 @@
-from sqlalchemy import select, func, update
+from sqlalchemy import select, func
 from sqlalchemy.orm import Session
 from typing import Optional, Literal
 
@@ -7,7 +7,7 @@ from utils.db_alchemy import engine
 
 from random import random, randint
 
-# Economy.py
+# economy.py
 
 def get_user(discord_id: int) -> Optional[Users]:
     with Session(bind=engine) as session:
