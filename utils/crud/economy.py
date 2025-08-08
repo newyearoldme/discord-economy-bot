@@ -1,0 +1,129 @@
+from sqlalchemy import select, update, func
+from typing import Optional, Literal
+
+from ..models import Users
+from ..db_alchemy import SessionLocal
+
+from random import random, randint
+
+
+async def get_balance(discord_id: int) -> Optional[int]:
+    async with SessionLocal() as session:
+        result = await session.scalars(select(Users.balance).where(Users.discord_id == discord_id))
+        return result.first()
+
+async def add_money(discord_id: int) -> tuple[Literal["not_registered", "success", "reset"]]:
+    async with SessionLocal() as session:
+        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
+        user = result.first()
+
+        if not user:
+            return "not_registered", None
+
+        roll = random()
+        if roll <= 0.9:
+            amount = randint(100, 500)
+            user.balance += amount
+            await session.commit()
+            return "success", amount
+        else:
+            user.balance = 0
+            await session.commit()
+            return "reset", None
+
+async def all_in(discord_id: int) -> tuple[Literal["zero_balance", "not_registered", "success", "reset"]]:
+    async with SessionLocal() as session:
+        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
+        user = result.first()
+
+        if not user:
+            return "not_registered", None
+
+        if user.balance == 0:
+            return "zero_balance", None
+        
+        roll = random()
+        if roll <= 0.5:
+            user.balance *= 2
+        else:
+            user.balance = 0
+            
+        await session.commit()
+        return "success" if roll <= 0.5 else "reset", user.balance
+
+async def transfer_money(sender_id: int, receiver_id: int, value: int) -> bool:
+    async with SessionLocal() as session:
+        sender_result = await session.scalars(select(Users).where(Users.discord_id == sender_id))
+        sender = sender_result.first()
+
+        receiver_result = await session.scalars(select(Users).where(Users.discord_id == receiver_id))
+        receiver = receiver_result.first()
+
+        if not sender or not receiver:
+            return False
+
+        if sender.balance < value:
+            return False
+
+        sender.balance -= value
+        receiver.balance += value
+
+        await session.commit()
+        return True
+
+async def admin_reset_money(discord_id: int) -> bool:
+    async with SessionLocal() as session:
+        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
+        user = result.first()
+
+        if not user:
+            return False
+
+        user.balance = 0
+        await session.commit()
+        return True
+
+async def admin_add_money(discord_id: int, amount: int):
+    async with SessionLocal() as session:
+        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
+        user = result.first()
+
+        if not user:
+            return False
+
+        user.balance += amount
+        await session.commit()
+        return True
+    
+async def admin_add_all_money(amount: int) -> bool:
+    async with SessionLocal() as session:
+        result = await session.scalars(select(Users))
+        users = result.all()
+
+        if not users:
+            return False
+
+        for user in users:
+            user.balance += amount
+
+        await session.commit()
+        return True
+
+async def reset_all_money():
+    async with SessionLocal() as session:
+        await session.execute(update(Users).values(balance=0))
+        await session.commit()
+
+async def get_all_balance() -> int:
+    async with SessionLocal() as session:
+        return await session.scalar(select(func.sum(Users.balance))) or 0
+
+async def get_mid_balance() -> float:
+    async with SessionLocal() as session:
+        total_balance = await session.scalar(select(func.sum(Users.balance))) or 0
+        total_users = await session.scalar(select(func.count(Users.id))) or 0
+
+        if total_users == 0:
+            return 0.0
+
+        return total_balance / total_users

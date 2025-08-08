@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from ui.admin_panel_view import AdminPanelView, get_embed
 
+
 class Administrator(discord.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -10,7 +11,7 @@ class Administrator(discord.Cog):
     @commands.has_permissions(administrator=True)
     async def sudo(self, ctx: discord.ApplicationContext):
         view = AdminPanelView()
-        embed = get_embed()
+        embed = await get_embed()
 
         await ctx.respond(view=view, embed=embed, ephemeral=True)
 

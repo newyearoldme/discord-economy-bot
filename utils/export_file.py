@@ -4,7 +4,7 @@ from utils import crud
 
 
 async def export_users_file(client: discord.Client) -> discord.File:
-    users = crud.get_all_users_full()
+    users = await crud.get_all_users_full()
     file = StringIO()
     file.write("ID | Имя пользователя         | Баланс\n")
     file.write("-" * 50 + "\n")

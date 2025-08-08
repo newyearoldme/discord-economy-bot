@@ -8,7 +8,7 @@ from .modals import AddMoneyAllModal, RemoveUserModal, AddMoneyModal, ResetMoney
 class AdminPanelView(View):
     @button(label="Обнулить всех", style=discord.ButtonStyle.danger, row=0)
     async def resetAllCallback(self, button, interaction: discord.Interaction):
-        crud.reset_all_money()
+        await crud.reset_all_money()
         await interaction.response.send_message("✅ Все счета обнулены", ephemeral=True)
 
     @button(label="Обнулить счёт пользователю", style=discord.ButtonStyle.blurple, row=0)
@@ -17,7 +17,7 @@ class AdminPanelView(View):
 
     @button(label="Удалить всех", style=discord.ButtonStyle.danger, row=1)
     async def deleteAllCallback(self, button, interaction: discord.Interaction):
-        crud.delete_all_users()
+        await crud.delete_all_users()
         await interaction.response.send_message("✅ Все пользователи удалены с базы данных", ephemeral=True)
 
     @button(label="Удалить пользователя", style=discord.ButtonStyle.blurple, row=1)
@@ -34,7 +34,7 @@ class AdminPanelView(View):
 
     @button(label="Экспортировать пользователей", style=discord.ButtonStyle.secondary, row=3)
     async def export_users_callback(self, button, interaction: discord.Interaction):
-        users = crud.get_all_users_full()
+        users = await crud.get_all_users_full()
         if not users:
             await interaction.response.send_message("Пользователи не найдены", ephemeral=True)
             return
@@ -42,13 +42,17 @@ class AdminPanelView(View):
         file = await export_users_file(interaction.client)
         await interaction.response.send_message("📄 Пользователи:", file=file, ephemeral=True)
 
-def get_embed() -> discord.Embed:
+async def get_embed() -> discord.Embed:
+    total_balance = await crud.get_all_balance()
+    total_users = await crud.get_all_users()
+    mid_balance = await crud.get_mid_balance()
+
     embed = discord.Embed(
-        title="Админ панель",
+        title="Админ панель"
     )
-    embed.add_field(name=f"Общий баланс: ${crud.get_all_balance()}", value="", inline=False)
-    embed.add_field(name=f"Количество учасников: {crud.get_all_users()}", value="")
-    embed.add_field(name=f"Средний баланс: ${crud.get_mid_balance()}", value="")
+    embed.add_field(name=f"Общий баланс: ${total_balance}", value="", inline=False)
+    embed.add_field(name=f"Количество учасников: {total_users}", value="")
+    embed.add_field(name=f"Средний баланс: ${mid_balance}", value="")
 
     return embed
 

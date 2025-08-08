@@ -1,17 +1,18 @@
 import discord
 from discord.ext import commands
+
+import asyncio
 import os
 from dotenv import load_dotenv
+
 from utils.db_alchemy import init_db
 
 load_dotenv()
 
-init_db()
-
 intents = discord.Intents.default()
 intents.members = True
 
-bot = discord.Bot(intents=intents)
+bot = discord.Bot(intents=intents)  # Можно добавить debug_guilds=[ID-сервера] для моментального обновления команд при перезапуске бота
 
 token = os.getenv("token")
 
@@ -45,6 +46,9 @@ async def on_application_command_error(ctx: discord.ApplicationContext, error: d
         print(f"❗ Ошибка: {error}")
         await ctx.respond("⚠️ Произошла неизвестная ошибка.", ephemeral=True)
 
+async def main():
+    await init_db()
+    await bot.start(token)
 
 if __name__ == "__main__":
-    bot.run(token)
+    asyncio.run(main())

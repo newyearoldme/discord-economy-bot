@@ -11,16 +11,16 @@ class Economy(discord.Cog):
 
     @discord.slash_command(description="Регистрирует Вас в базе данных")
     async def register(self, ctx: discord.ApplicationContext):
-        user_in_db = crud.get_user(ctx.author.id)
+        user_in_db = await crud.get_user(ctx.author.id)
         if not user_in_db:
-            crud.create_user(ctx.author.id)
+            await crud.create_user(ctx.author.id)
             await ctx.respond("✅ Вы успешно зарегистрировались!", ephemeral=True)
         else:
             await ctx.respond("❌ Вы уже зарегистрированы!", ephemeral=True)
 
     @discord.slash_command(description="Показывает Ваш баланс")
     async def balance(self, ctx: discord.ApplicationContext):
-        balance = crud.get_balance(ctx.author.id)
+        balance = await crud.get_balance(ctx.author.id)
 
         if balance is None:
             await ctx.respond("❌ Вы не зарегистрированы, используйте команду `/register`", ephemeral=True)
@@ -30,7 +30,7 @@ class Economy(discord.Cog):
     @discord.slash_command(description="90% шанс получить $100-500, 10% потерять всё")
     @commands.cooldown(1, 10, commands.BucketType.user)
     async def add_money(self, ctx: discord.ApplicationContext):
-        result, value = crud.add_money(ctx.author.id)
+        result, value = await crud.add_money(ctx.author.id)
 
         match result:
             case "not_registered":
@@ -42,7 +42,7 @@ class Economy(discord.Cog):
 
     @discord.slash_command(description="Испытайте удачу, либо Ваш счёт удваивается, либо обнуляется!")
     async def all_in(self, ctx: discord.ApplicationContext):
-        result, balance = crud.all_in(ctx.author.id)
+        result, balance = await crud.all_in(ctx.author.id)
 
         match result:
             case "not_registered":
@@ -65,7 +65,7 @@ class Economy(discord.Cog):
             await ctx.respond("❌ Нельзя отправлять деньги самому себе!", ephemeral=True)
             return
 
-        success = crud.transfer_money(ctx.author.id, user.id, value)
+        success = await crud.transfer_money(ctx.author.id, user.id, value)
 
         if not success:
             await ctx.respond("⚠️ Невозможно выполнить перевод. Возможно, один из пользователей не зарегистрирован или недостаточно средств.", ephemeral=True)
