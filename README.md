@@ -8,8 +8,8 @@
 ## ⚙️ Используемые технологии
 
 - Python 3.13.5
-- [`pycord`](https://docs.pycord.dev/en/stable/) — фреймворк для написания Discord-бота
-- [`SQLAlchemy 2.x`](https://docs.sqlalchemy.org/en/20/#) — ORM для работы с PostgresSQL
+- [`Pycord`](https://docs.pycord.dev/en/stable/) — фреймворк для написания Discord-бота
+- [`Async SQLAlchemy 2.x`](https://docs.sqlalchemy.org/en/20/#) — ORM для работы с PostgresSQL
 - `PostgresSQL` — база данных, к которой необходимо подключаться
 - `.env` — для хранения конфиденциальных переменных (токенов и т.п.)
 
