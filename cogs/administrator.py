@@ -15,6 +15,5 @@ class Administrator(discord.Cog):
 
         await ctx.respond(view=view, embed=embed, ephemeral=True)
 
-
 def setup(bot: discord.Bot):
     bot.add_cog(Administrator(bot))

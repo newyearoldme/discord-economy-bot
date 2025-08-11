@@ -5,9 +5,8 @@ import asyncio
 import os
 from dotenv import load_dotenv
 
-from utils.db_alchemy import init_db
-
 load_dotenv()
+from utils.db_alchemy import init_db
 
 intents = discord.Intents.default()
 intents.members = True
@@ -51,4 +50,7 @@ async def main():
     await bot.start(token)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("\n✅ Бот остановлен")

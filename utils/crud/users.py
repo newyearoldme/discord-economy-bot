@@ -7,8 +7,7 @@ from ..db_alchemy import SessionLocal
 
 async def get_user(discord_id: int) -> Optional[Users]:
     async with SessionLocal() as session:
-        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
-        return result.first()
+        return await session.scalar(select(Users).where(Users.discord_id == discord_id))
     
 async def create_user(discord_id: int) -> Users:
     async with SessionLocal() as session:
@@ -34,8 +33,7 @@ async def get_all_users_full():
     
 async def admin_delete_user(discord_id: int) -> bool:
     async with SessionLocal() as session:
-        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
-        user = result.first()
+        user = await session.scalar(select(Users).where(Users.discord_id == discord_id))
 
         if not user:
             return False

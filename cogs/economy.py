@@ -68,7 +68,7 @@ class Economy(discord.Cog):
         success = await crud.transfer_money(ctx.author.id, user.id, value)
 
         if not success:
-            await ctx.respond("⚠️ Невозможно выполнить перевод. Возможно, один из пользователей не зарегистрирован или недостаточно средств.", ephemeral=True)
+            await ctx.respond("⚠️ Невозможно выполнить перевод. Возможно, один из пользователей не зарегистрирован или недостаточно средств", ephemeral=True)
             return
 
         await ctx.respond(f"✅ Вы успешно перевели ${value} пользователю {user.mention}", ephemeral=True)

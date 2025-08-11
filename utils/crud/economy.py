@@ -9,13 +9,11 @@ from random import random, randint
 
 async def get_balance(discord_id: int) -> Optional[int]:
     async with SessionLocal() as session:
-        result = await session.scalars(select(Users.balance).where(Users.discord_id == discord_id))
-        return result.first()
+        return await session.scalar(select(Users.balance).where(Users.discord_id == discord_id))
 
 async def add_money(discord_id: int) -> tuple[Literal["not_registered", "success", "reset"]]:
     async with SessionLocal() as session:
-        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
-        user = result.first()
+        user = await session.scalar(select(Users).where(Users.discord_id == discord_id))
 
         if not user:
             return "not_registered", None
@@ -33,8 +31,7 @@ async def add_money(discord_id: int) -> tuple[Literal["not_registered", "success
 
 async def all_in(discord_id: int) -> tuple[Literal["zero_balance", "not_registered", "success", "reset"]]:
     async with SessionLocal() as session:
-        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
-        user = result.first()
+        user = await session.scalar(select(Users).where(Users.discord_id == discord_id))
 
         if not user:
             return "not_registered", None
@@ -53,11 +50,8 @@ async def all_in(discord_id: int) -> tuple[Literal["zero_balance", "not_register
 
 async def transfer_money(sender_id: int, receiver_id: int, value: int) -> bool:
     async with SessionLocal() as session:
-        sender_result = await session.scalars(select(Users).where(Users.discord_id == sender_id))
-        sender = sender_result.first()
-
-        receiver_result = await session.scalars(select(Users).where(Users.discord_id == receiver_id))
-        receiver = receiver_result.first()
+        sender = await session.scalar(select(Users).where(Users.discord_id == sender_id))
+        receiver = await session.scalar(select(Users).where(Users.discord_id == receiver_id))
 
         if not sender or not receiver:
             return False
@@ -73,8 +67,7 @@ async def transfer_money(sender_id: int, receiver_id: int, value: int) -> bool:
 
 async def admin_reset_money(discord_id: int) -> bool:
     async with SessionLocal() as session:
-        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
-        user = result.first()
+        user = await session.scalar(select(Users).where(Users.discord_id == discord_id))
 
         if not user:
             return False
@@ -85,8 +78,7 @@ async def admin_reset_money(discord_id: int) -> bool:
 
 async def admin_add_money(discord_id: int, amount: int):
     async with SessionLocal() as session:
-        result = await session.scalars(select(Users).where(Users.discord_id == discord_id))
-        user = result.first()
+        user = await session.scalar(select(Users).where(Users.discord_id == discord_id))
 
         if not user:
             return False
