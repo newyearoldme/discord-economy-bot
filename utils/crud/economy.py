@@ -1,5 +1,5 @@
 from sqlalchemy import select, update, func
-from typing import Optional, Literal
+from enum import Enum
 
 from ..models import Users
 from ..db_alchemy import SessionLocal
@@ -7,37 +7,48 @@ from ..db_alchemy import SessionLocal
 from random import random, randint
 
 
-async def get_balance(discord_id: int) -> Optional[int]:
+class AddMoneyResult(str, Enum):
+    NOT_REGISTERED = "not_registered"
+    SUCCESS = "success"
+    RESET = "reset"
+
+class AllInResult(str, Enum):
+    NOT_REGISTERED = "not_registered"
+    SUCCESS = "success"
+    RESET = "reset"
+    ZERO_BALANCE = "zero_balance"
+
+async def get_balance(discord_id: int) -> int | None:
     async with SessionLocal() as session:
         return await session.scalar(select(Users.balance).where(Users.discord_id == discord_id))
 
-async def add_money(discord_id: int) -> tuple[Literal["not_registered", "success", "reset"]]:
+async def add_money(discord_id: int) -> tuple[AddMoneyResult, int | None]:
     async with SessionLocal() as session:
         user = await session.scalar(select(Users).where(Users.discord_id == discord_id))
 
         if not user:
-            return "not_registered", None
+            return AddMoneyResult.NOT_REGISTERED, None
 
         roll = random()
         if roll <= 0.9:
             amount = randint(100, 500)
             user.balance += amount
             await session.commit()
-            return "success", amount
+            return AddMoneyResult.SUCCESS, amount
         else:
             user.balance = 0
             await session.commit()
-            return "reset", None
+            return AddMoneyResult.RESET, None
 
-async def all_in(discord_id: int) -> tuple[Literal["zero_balance", "not_registered", "success", "reset"]]:
+async def all_in(discord_id: int) -> tuple[AllInResult, int | None]:
     async with SessionLocal() as session:
         user = await session.scalar(select(Users).where(Users.discord_id == discord_id))
 
         if not user:
-            return "not_registered", None
+            return AllInResult.NOT_REGISTERED, None
 
         if user.balance == 0:
-            return "zero_balance", None
+            return AllInResult.ZERO_BALANCE, None
         
         roll = random()
         if roll <= 0.5:
@@ -46,7 +57,7 @@ async def all_in(discord_id: int) -> tuple[Literal["zero_balance", "not_register
             user.balance = 0
             
         await session.commit()
-        return "success" if roll <= 0.5 else "reset", user.balance
+        return AllInResult.SUCCESS if roll <= 0.5 else AllInResult.RESET, user.balance
 
 async def transfer_money(sender_id: int, receiver_id: int, value: int) -> bool:
     async with SessionLocal() as session:

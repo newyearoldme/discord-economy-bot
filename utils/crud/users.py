@@ -1,11 +1,10 @@
-from typing import Optional
 from sqlalchemy import select, delete, func
 
 from ..models import Users
 from ..db_alchemy import SessionLocal
 
 
-async def get_user(discord_id: int) -> Optional[Users]:
+async def get_user(discord_id: int) -> Users | None:
     async with SessionLocal() as session:
         return await session.scalar(select(Users).where(Users.discord_id == discord_id))
     
